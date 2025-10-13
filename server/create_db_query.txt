@@ -1,0 +1,92 @@
+-- Diagrams (top-level entity)
+CREATE TABLE diagrams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    database_type TEXT,
+    database_edition TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Tables (inside a diagram)
+CREATE TABLE db_tables (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    diagram_id UUID NOT NULL REFERENCES diagrams(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    schema TEXT,
+    x INT,
+    y INT,
+    fields JSONB,           -- stored as JSON array
+    indexes JSONB,
+    color TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    width INT,
+    comment TEXT,
+    is_view BOOLEAN DEFAULT FALSE,
+    is_materialized_view BOOLEAN DEFAULT FALSE,
+    "order" INT
+);
+
+-- Relationships between tables
+CREATE TABLE db_relationships (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    diagram_id UUID NOT NULL REFERENCES diagrams(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    source_schema TEXT,
+    source_table_id UUID,
+    target_schema TEXT,
+    target_table_id UUID,
+    source_field_id UUID,
+    target_field_id UUID,
+    type TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    source_cardinality TEXT,
+    target_cardinality TEXT
+);
+
+-- Dependencies
+CREATE TABLE db_dependencies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    diagram_id UUID NOT NULL REFERENCES diagrams(id) ON DELETE CASCADE,
+    schema TEXT,
+    table_id UUID,
+    dependent_schema TEXT,
+    dependent_table_id UUID,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Areas (UI grouping in diagrams)
+CREATE TABLE areas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    diagram_id UUID NOT NULL REFERENCES diagrams(id) ON DELETE CASCADE,
+    name TEXT,
+    x INT,
+    y INT,
+    width INT,
+    height INT,
+    color TEXT
+);
+
+-- Custom Types
+CREATE TABLE db_custom_types (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    diagram_id UUID NOT NULL REFERENCES diagrams(id) ON DELETE CASCADE,
+    schema TEXT,
+    type TEXT,
+    kind TEXT,
+    values JSONB,
+    fields JSONB
+);
+
+-- Config (only one row per user/global)
+CREATE TABLE config (
+    id SERIAL PRIMARY KEY,
+    default_diagram_id UUID REFERENCES diagrams(id) ON DELETE SET NULL
+);
+
+-- Diagram filters
+CREATE TABLE diagram_filters (
+    diagram_id UUID PRIMARY KEY REFERENCES diagrams(id) ON DELETE CASCADE,
+    table_ids JSONB,
+    schemas_ids JSONB
+);

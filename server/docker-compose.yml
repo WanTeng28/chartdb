@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_HOST=db
+      - DATABASE_PORT=3306
+      - DATABASE_USER=diagrams_user
+      - DATABASE_PASSWORD=diagrams_pass
+      - DATABASE_NAME=diagrams_db
+    depends_on:
+      - db
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+  db:
+    image: mariadb:10.9
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=diagrams_db
+      - MYSQL_USER=diagrams_user
+      - MYSQL_PASSWORD=diagrams_pass
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+volumes:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge
