@@ -23,8 +23,7 @@ CREATE TABLE IF NOT EXISTS `db_tables` (
   `comment` TEXT,
   `is_view` BOOLEAN DEFAULT FALSE,
   `is_materialized_view` BOOLEAN DEFAULT FALSE,
-  `order` FLOAT,
-  CONSTRAINT `fk_tables_diagram` FOREIGN KEY (`diagram_id`) REFERENCES `diagrams`(`id`) ON DELETE CASCADE
+  `order` FLOAT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `db_relationships` (
@@ -40,8 +39,7 @@ CREATE TABLE IF NOT EXISTS `db_relationships` (
   `type` VARCHAR(255),
   `source_cardinality` VARCHAR(255),
   `target_cardinality` VARCHAR(255),
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT `fk_relationships_diagram` FOREIGN KEY (`diagram_id`) REFERENCES `diagrams`(`id`) ON DELETE CASCADE
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `db_dependencies` (
@@ -51,8 +49,7 @@ CREATE TABLE IF NOT EXISTS `db_dependencies` (
   `table_id` VARCHAR(255) NOT NULL,
   `dependent_schema` VARCHAR(255),
   `dependent_table_id` VARCHAR(255) NOT NULL,
-  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT `fk_dependencies_diagram` FOREIGN KEY (`diagram_id`) REFERENCES `diagrams`(`id`) ON DELETE CASCADE
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `areas` (
@@ -63,8 +60,7 @@ CREATE TABLE IF NOT EXISTS `areas` (
   `y` FLOAT,
   `width` FLOAT,
   `height` FLOAT,
-  `color` VARCHAR(255),
-  CONSTRAINT `fk_areas_diagram` FOREIGN KEY (`diagram_id`) REFERENCES `diagrams`(`id`) ON DELETE CASCADE
+  `color` VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `db_custom_types` (
@@ -74,19 +70,16 @@ CREATE TABLE IF NOT EXISTS `db_custom_types` (
   `type` VARCHAR(255) NOT NULL,
   `kind` VARCHAR(255),
   `values` JSON,
-  `fields` JSON,
-  CONSTRAINT `fk_customtypes_diagram` FOREIGN KEY (`diagram_id`) REFERENCES `diagrams`(`id`) ON DELETE CASCADE
+  `fields` JSON
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `config` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `default_diagram_id` VARCHAR(255),
-  CONSTRAINT `fk_config_diagram` FOREIGN KEY (`default_diagram_id`) REFERENCES `diagrams`(`id`) ON DELETE SET NULL
+  `default_diagram_id` VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `diagram_filters` (
   `diagram_id` VARCHAR(255) NOT NULL PRIMARY KEY,
   `table_ids` JSON,
-  `schemas_ids` JSON,
-  CONSTRAINT `fk_filters_diagram` FOREIGN KEY (`diagram_id`) REFERENCES `diagrams`(`id`) ON DELETE CASCADE
+  `schemas_ids` JSON
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

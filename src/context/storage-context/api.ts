@@ -9,7 +9,12 @@ import type { DiagramFilter } from '@/lib/domain/diagram-filter/diagram-filter';
 import type { ChartDBConfig } from '@/lib/domain/config';
 
 // Utility function to format ISO 8601 datetime to MariaDB-compatible format (YYYY-MM-DD HH:MM:SS)
-const formatDateTime = (isoDate: string | undefined): string => {
+const formatDateTime = (isoDate: Date | undefined): string => {
+  if (!isoDate) return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  return isoDate.toISOString().slice(0, 19).replace('T', ' ');
+};
+
+const formatNumberDateTime = (isoDate: number | undefined): string => {
   if (!isoDate) return new Date().toISOString().slice(0, 19).replace('T', ' ');
   return new Date(isoDate).toISOString().slice(0, 19).replace('T', ' ');
 };
@@ -29,7 +34,13 @@ const apiFetch = async <T>(url: string, options: RequestInit = {}): Promise<T | 
     if (response.status === 204) {
       return undefined;
     }
-    return response.json() as Promise<T>;
+    try {
+      const text = await response.text();
+      return text ? JSON.parse(text) as T : undefined;
+    } catch {
+      return undefined;
+    }
+    // return response.json() as Promise<T>;
   } catch (error) {
     console.error(`Fetch error for ${url}:`, error);
     throw error;
@@ -50,9 +61,10 @@ const apiStorage: StorageContext = {
     return await apiFetch<DiagramFilter>(`/diagram-filters/${diagramId}`);
   },
   updateDiagramFilter: async (diagramId: string, filter: DiagramFilter) => {
+    console.log(filter)
     await apiFetch(`/diagram-filters/${diagramId}`, {
       method: 'PUT',
-      body: JSON.stringify({ tableIds: filter.tableIds, schemasIds: filter.schemasIds }),
+      body: JSON.stringify({ tableIds: filter.tableIds, schemasIds: filter.schemaIds }),
     });
   },
   deleteDiagramFilter: async (diagramId: string) => {
@@ -119,7 +131,7 @@ const apiStorage: StorageContext = {
           ...table,
           fields: table.fields || [],
           indexes: table.indexes || [],
-          createdAt: formatDateTime(table.createdAt),
+          createdAt: formatNumberDateTime(table.createdAt),
         },
       }),
     });
@@ -133,7 +145,7 @@ const apiStorage: StorageContext = {
       body: JSON.stringify({
         attributes: {
           ...attributes,
-          createdAt: attributes.createdAt ? formatDateTime(attributes.createdAt) : undefined,
+          createdAt: attributes.createdAt ? formatNumberDateTime(attributes.createdAt) : undefined,
         },
       }),
     });
@@ -146,7 +158,7 @@ const apiStorage: StorageContext = {
           ...table,
           fields: table.fields || [],
           indexes: table.indexes || [],
-          createdAt: formatDateTime(table.createdAt),
+          createdAt: formatNumberDateTime(table.createdAt),
         },
       }),
     });
@@ -166,7 +178,7 @@ const apiStorage: StorageContext = {
       body: JSON.stringify({
         relationship: {
           ...relationship,
-          createdAt: formatDateTime(relationship.createdAt),
+          createdAt: formatNumberDateTime(relationship.createdAt),
         },
       }),
     });
@@ -180,7 +192,7 @@ const apiStorage: StorageContext = {
       body: JSON.stringify({
         attributes: {
           ...attributes,
-          createdAt: attributes.createdAt ? formatDateTime(attributes.createdAt) : undefined,
+          createdAt: attributes.createdAt ? formatNumberDateTime(attributes.createdAt) : undefined,
         },
       }),
     });
@@ -200,7 +212,7 @@ const apiStorage: StorageContext = {
       body: JSON.stringify({
         dependency: {
           ...dependency,
-          createdAt: formatDateTime(dependency.createdAt),
+          createdAt: formatNumberDateTime(dependency.createdAt),
         },
       }),
     });
@@ -214,7 +226,7 @@ const apiStorage: StorageContext = {
       body: JSON.stringify({
         attributes: {
           ...attributes,
-          createdAt: attributes.createdAt ? formatDateTime(attributes.createdAt) : undefined,
+          createdAt: attributes.createdAt ? formatNumberDateTime(attributes.createdAt) : undefined,
         },
       }),
     });

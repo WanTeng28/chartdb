@@ -78,7 +78,7 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
                             ? { schemaIds: [schemas[0].id] }
                             : {};
                 }
-
+                console.log(filterToSet)
                 setFilter(filterToSet);
             }
 
@@ -106,13 +106,17 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
 
     const clearTableIds: DiagramFilterContext['clearTableIdsFilter'] =
         useCallback(() => {
+            console.log(allTables)
             setFilter(
-                (prev) =>
-                    ({
+                (prev) =>{
+
+                    console.log(prev)
+                   return ({
                         ...prev,
-                        tableIds: undefined,
+                        tableIds: allTables.map(e=>e.id),
                     }) satisfies DiagramFilter
-            );
+                }
+                );
         }, []);
 
     const setTableIdsEmpty: DiagramFilterContext['setTableIdsFilterEmpty'] =
@@ -128,6 +132,7 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
 
     // Reset filter
     const resetFilter: DiagramFilterContext['resetFilter'] = useCallback(() => {
+        console.log('reset')
         setFilter({});
     }, []);
 
@@ -152,7 +157,7 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
                                 },
                             }) === false
                     );
-
+                    console.log("visible: "+isSchemaVisible)
                     let newSchemaIds: string[] | undefined;
                     let newTableIds: string[] | undefined = prev.tableIds;
 
@@ -181,6 +186,7 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
                         }
                     } else {
                         // Schema is not visible, make it visible
+
                         newSchemaIds = [
                             ...new Set([...(currentSchemaIds || []), schemaId]),
                         ];
@@ -219,6 +225,7 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
     const toggleTableFilterForNoSchema = useCallback(
         (tableId: string) => {
             setFilter((prev) => {
+                console.log('here')
                 const currentTableIds = prev.tableIds;
 
                 // Check if table is currently visible
@@ -231,6 +238,7 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
                 let newTableIds: string[] | undefined;
 
                 if (isTableVisible) {
+                    console.log('if')
                     // Table is visible, make it not visible
                     if (!currentTableIds) {
                         // All tables are visible, create filter with all except this one
@@ -238,17 +246,20 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
                             .filter((t) => t.id !== tableId)
                             .map((t) => t.id);
                     } else {
+                        console.log('if else')
                         // Remove this table from the filter
                         newTableIds = currentTableIds.filter(
                             (id) => id !== tableId
                         );
                     }
                 } else {
+                    console.log('else')
                     // Table is not visible, make it visible
                     newTableIds = [
                         ...new Set([...(currentTableIds || []), tableId]),
                     ];
                 }
+                console.log(newTableIds)
 
                 // Use reduceFilter to optimize and handle edge cases
                 return reduceFilter(
@@ -275,11 +286,10 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
                     toggleTableFilterForNoSchema(tableId);
                     return;
                 }
-
+                console.log('1')
                 setFilter((prev) => {
                     // Find the table in the tables list
                     const tableInfo = allTables.find((t) => t.id === tableId);
-
                     if (!tableInfo) {
                         return prev;
                     }
@@ -433,7 +443,7 @@ export const DiagramFilterProvider: React.FC<React.PropsWithChildren> = ({
             ({ tableIds, filterCallback }) => {
                 setFilter((prev) => {
                     let tableIdsToAdd: string[];
-
+                    console.log('here2')
                     if (tableIds) {
                         // If tableIds are provided, use them directly
                         tableIdsToAdd = tableIds;
