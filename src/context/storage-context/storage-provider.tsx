@@ -486,6 +486,7 @@ const storageImpl: StorageContext = useApi ? apiStorage : dexieImpl;
     storageImpl.getConfig().then(async (config) => {
       if (!config) {
         const diagrams = await storageImpl.listDiagrams();
+        console.log(diagrams)
         await storageImpl.updateConfig({ defaultDiagramId: diagrams?.[0]?.id ?? '' });
       }
     });

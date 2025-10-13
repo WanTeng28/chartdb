@@ -57,7 +57,8 @@ app.get('/diagram-filters/:diagramId', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const result = await conn.query('SELECT table_ids AS tableIds, schemas_ids AS schemasIds FROM diagram_filters WHERE diagram_id = ?', [diagramId]);
-    res.json(result[0] ? { diagramId, tableIds: JSON.parse(result[0].tableIds || '[]'), schemasIds: JSON.parse(result[0].schemasIds || '[]') } : undefined);
+    console.log(result)
+    res.json(result[0] ? { diagramId, tableIds: result[0].tableIds || [], schemasIds: result[0].schemasIds || []} : undefined);
   } finally {
     conn.release();
   }
@@ -66,9 +67,10 @@ app.get('/diagram-filters/:diagramId', asyncHandler(async (req, res) => {
 app.put('/diagram-filters/:diagramId', asyncHandler(async (req, res) => {
   const { diagramId } = req.params;
   const { tableIds, schemasIds } = req.body;
-  if (!tableIds || !schemasIds) {
-    return res.status(400).json({ error: 'Missing tableIds or schemasIds' });
-  }
+  console.log(req.body)
+  // if (!tableIds || !schemasIds) {
+  //   return res.status(400).json({ error: 'Missing tableIds or schemasIds' });
+  // }
   const conn = await pool.getConnection();
   try {
     await conn.query(
@@ -124,8 +126,8 @@ app.get('/diagrams', asyncHandler(async (req, res) => {
     if (includeTables === 'true' || includeRelationships === 'true' || includeDependencies === 'true' || includeAreas === 'true' || includeCustomTypes === 'true') {
       for (let diagram of diagrams) {
         if (includeTables === 'true') {
-          const tables = await conn.query('SELECT id, diagram_id AS diagramId, name, schema, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ?', [diagram.id]);
-          diagram.tables = tables.map(t => ({ ...t, fields: JSON.parse(t.fields || '[]'), indexes: JSON.parse(t.indexes || '[]') }));
+          const tables = await conn.query('SELECT id, diagram_id AS diagramId, name, `schema`, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ?', [diagram.id]);
+          diagram.tables = tables.map(t => ({ ...t, fields: t.fields || [], indexes: t.indexes ||[] }));
         }
         if (includeRelationships === 'true') {
           diagram.relationships = await conn.query(
@@ -135,7 +137,7 @@ app.get('/diagrams', asyncHandler(async (req, res) => {
         }
         if (includeDependencies === 'true') {
           diagram.dependencies = await conn.query(
-            'SELECT id, diagram_id AS diagramId, schema, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ?',
+            'SELECT id, diagram_id AS diagramId, `schema`, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ?',
             [diagram.id]
           );
         }
@@ -143,8 +145,8 @@ app.get('/diagrams', asyncHandler(async (req, res) => {
           diagram.areas = await conn.query('SELECT id, diagram_id AS diagramId, name, x, y, width, height, color FROM areas WHERE diagram_id = ?', [diagram.id]);
         }
         if (includeCustomTypes === 'true') {
-          const customTypes = await conn.query('SELECT id, diagram_id AS diagramId, schema, type, kind, values, fields FROM db_custom_types WHERE diagram_id = ?', [diagram.id]);
-          diagram.customTypes = customTypes.map(ct => ({ ...ct, values: JSON.parse(ct.values || '[]'), fields: JSON.parse(ct.fields || '[]') }));
+          const customTypes = await conn.query('SELECT id, diagram_id AS diagramId, `schema`, type, kind, `values`, fields FROM db_custom_types WHERE diagram_id = ?', [diagram.id]);
+          diagram.customTypes = customTypes.map(ct => ({ ...ct, values: ct.values || [], fields: ct.fields || [] }));
         }
       }
     }
@@ -165,8 +167,8 @@ app.get('/diagrams/:id', asyncHandler(async (req, res) => {
       return res.status(404).json({ error: 'Diagram not found' });
     }
     if (includeTables === 'true') {
-      const tables = await conn.query('SELECT id, diagram_id AS diagramId, name, schema, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ?', [id]);
-      diagram.tables = tables.map(t => ({ ...t, fields: JSON.parse(t.fields || '[]'), indexes: JSON.parse(t.indexes || '[]') }));
+      const tables = await conn.query('SELECT id, diagram_id AS diagramId, name, `schema`, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ?', [id]);
+      diagram.tables = tables.map(t => ({ ...t, fields: t.fields || [], indexes: t.indexes || [] }));
     }
     if (includeRelationships === 'true') {
       diagram.relationships = await conn.query(
@@ -176,7 +178,7 @@ app.get('/diagrams/:id', asyncHandler(async (req, res) => {
     }
     if (includeDependencies === 'true') {
       diagram.dependencies = await conn.query(
-        'SELECT id, diagram_id AS diagramId, schema, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ?',
+        'SELECT id, diagram_id AS diagramId, `schema`, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ?',
         [id]
       );
     }
@@ -184,8 +186,8 @@ app.get('/diagrams/:id', asyncHandler(async (req, res) => {
       diagram.areas = await conn.query('SELECT id, diagram_id AS diagramId, name, x, y, width, height, color FROM areas WHERE diagram_id = ?', [id]);
     }
     if (includeCustomTypes === 'true') {
-      const customTypes = await conn.query('SELECT id, diagram_id AS diagramId, schema, type, kind, values, fields FROM db_custom_types WHERE diagram_id = ?', [id]);
-      diagram.customTypes = customTypes.map(ct => ({ ...ct, values: JSON.parse(ct.values || '[]'), fields: JSON.parse(ct.fields || '[]') }));
+      const customTypes = await conn.query('SELECT id, diagram_id AS diagramId, `schema`, type, kind, `values`, fields FROM db_custom_types WHERE diagram_id = ?', [id]);
+      diagram.customTypes = customTypes.map(ct => ({ ...ct, values: ct.values || [], fields: ct.fields || [] }));
     }
     res.json(diagram);
   } finally {
@@ -264,7 +266,7 @@ app.post('/diagrams/:diagramId/tables', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.query(
-      'INSERT INTO db_tables (id, diagram_id, name, schema, x, y, fields, indexes, color, created_at, width, comment, is_view, is_materialized_view, `order`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO db_tables (id, diagram_id, name, `schema`, x, y, fields, indexes, color, created_at, width, comment, is_view, is_materialized_view, `order`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         id,
         diagramId,
@@ -294,13 +296,14 @@ app.get('/diagrams/:diagramId/tables/:id', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const result = await conn.query(
-      'SELECT id, diagram_id AS diagramId, name, schema, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ? AND id = ?',
+      'SELECT id, diagram_id AS diagramId, name, `schema`, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ? AND id = ?',
       [diagramId, id]
     );
     if (!result[0]) {
       return res.status(404).json({ error: 'Table not found' });
     }
-    res.json({ ...result[0], fields: JSON.parse(result[0].fields || '[]'), indexes: JSON.parse(result[0].indexes || '[]') });
+    console.log(result)
+    res.json({ ...result[0], fields: result[0].fields || [], indexes: result[0].indexes || [] });
   } finally {
     conn.release();
   }
@@ -320,7 +323,7 @@ app.patch('/tables/:id', asyncHandler(async (req, res) => {
       if (key === 'isView') return 'is_view = ?';
       if (key === 'isMaterializedView') return 'is_materialized_view = ?';
       if (key === 'order') return '`order` = ?';
-      return `${key} = ?`;
+      return `\`${key}\` = ?`;
     }).join(', ');
     const values = Object.entries(attributes).map(([key, value]) => {
       if (['fields', 'indexes'].includes(key)) return JSON.stringify(value || []);
@@ -346,7 +349,7 @@ app.put('/diagrams/:diagramId/tables', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.query(
-      'INSERT INTO db_tables (id, diagram_id, name, schema, x, y, fields, indexes, color, created_at, width, comment, is_view, is_materialized_view, `order`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = ?, schema = ?, x = ?, y = ?, fields = ?, indexes = ?, color = ?, created_at = ?, width = ?, comment = ?, is_view = ?, is_materialized_view = ?, `order` = ?',
+      'INSERT INTO db_tables (id, diagram_id, name, `schema`, x, y, fields, indexes, color, created_at, width, comment, is_view, is_materialized_view, `order`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = ?, `schema` = ?, x = ?, y = ?, fields = ?, indexes = ?, color = ?, created_at = ?, width = ?, comment = ?, is_view = ?, is_materialized_view = ?, `order` = ?',
       [
         id, diagramId, name, schema || null, x || null, y || null, JSON.stringify(fields || []), JSON.stringify(indexes || []), color || null, createdAt || new Date().toISOString(), width || null, comment || null, isView || false, isMaterializedView || false, order || null,
         name, schema || null, x || null, y || null, JSON.stringify(fields || []), JSON.stringify(indexes || []), color || null, createdAt || new Date().toISOString(), width || null, comment || null, isView || false, isMaterializedView || false, order || null
@@ -374,10 +377,10 @@ app.get('/diagrams/:diagramId/tables', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const result = await conn.query(
-      'SELECT id, diagram_id AS diagramId, name, schema, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ?',
+      'SELECT id, diagram_id AS diagramId, name, `schema`, x, y, fields, indexes, color, created_at AS createdAt, width, comment, is_view AS isView, is_materialized_view AS isMaterializedView, `order` FROM db_tables WHERE diagram_id = ?',
       [diagramId]
     );
-    res.json(result.map(t => ({ ...t, fields: JSON.parse(t.fields || '[]'), indexes: JSON.parse(t.indexes || '[]') })));
+    res.json(result.map(t => ({ ...t, fields: t.fields || [], indexes: t.indexes || [] })));
   } finally {
     conn.release();
   }
@@ -526,7 +529,7 @@ app.post('/diagrams/:diagramId/dependencies', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.query(
-      'INSERT INTO db_dependencies (id, diagram_id, schema, table_id, dependent_schema, dependent_table_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO db_dependencies (id, diagram_id, `schema`, table_id, dependent_schema, dependent_table_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [id, diagramId, schema || null, tableId, dependentSchema || null, dependentTableId, createdAt || new Date().toISOString()]
     );
     res.status(204).send();
@@ -540,7 +543,7 @@ app.get('/diagrams/:diagramId/dependencies/:id', asyncHandler(async (req, res) =
   const conn = await pool.getConnection();
   try {
     const result = await conn.query(
-      'SELECT id, diagram_id AS diagramId, schema, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ? AND id = ?',
+      'SELECT id, diagram_id AS diagramId, `schema`, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ? AND id = ?',
       [diagramId, id]
     );
     if (!result[0]) {
@@ -591,7 +594,7 @@ app.get('/diagrams/:diagramId/dependencies', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const result = await conn.query(
-      'SELECT id, diagram_id AS diagramId, schema, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ?',
+      'SELECT id, diagram_id AS diagramId, `schema`, table_id AS tableId, dependent_schema AS dependentSchema, dependent_table_id AS dependentTableId, created_at AS createdAt FROM db_dependencies WHERE diagram_id = ?',
       [diagramId]
     );
     res.json(result);
@@ -718,7 +721,7 @@ app.post('/diagrams/:diagramId/custom-types', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     await conn.query(
-      'INSERT INTO db_custom_types (id, diagram_id, schema, type, kind, values, fields) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO db_custom_types (id, diagram_id, `schema`, type, kind, `values`, fields) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [id, diagramId, schema || null, type, kind || null, JSON.stringify(values || []), JSON.stringify(fields || [])]
     );
     res.status(204).send();
@@ -732,13 +735,13 @@ app.get('/diagrams/:diagramId/custom-types/:id', asyncHandler(async (req, res) =
   const conn = await pool.getConnection();
   try {
     const result = await conn.query(
-      'SELECT id, diagram_id AS diagramId, schema, type, kind, values, fields FROM db_custom_types WHERE diagram_id = ? AND id = ?',
+      'SELECT id, diagram_id AS diagramId, `schema`, type, kind, `values`, fields FROM db_custom_types WHERE diagram_id = ? AND id = ?',
       [diagramId, id]
     );
     if (!result[0]) {
       return res.status(404).json({ error: 'Custom type not found' });
     }
-    res.json({ ...result[0], values: JSON.parse(result[0].values || '[]'), fields: JSON.parse(result[0].fields || '[]') });
+    res.json({ ...result[0], values: result[0].values || [], fields: result[0].fields || [] });
   } finally {
     conn.release();
   }
@@ -783,10 +786,10 @@ app.get('/diagrams/:diagramId/custom-types', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const result = await conn.query(
-      'SELECT id, diagram_id AS diagramId, schema, type, kind, values, fields FROM db_custom_types WHERE diagram_id = ? ORDER BY type',
+      'SELECT id, diagram_id AS diagramId, `schema`, type, kind, `values`, fields FROM db_custom_types WHERE diagram_id = ? ORDER BY type',
       [diagramId]
     );
-    res.json(result.map(ct => ({ ...ct, values: JSON.parse(ct.values || '[]'), fields: JSON.parse(ct.fields || '[]') })));
+    res.json(result.map(ct => ({ ...ct, values: ct.values || [], fields: ct.fields || [] })));
   } finally {
     conn.release();
   }

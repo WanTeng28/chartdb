@@ -51,7 +51,7 @@ export const OpenDiagramDialog: React.FC<OpenDiagramDialogProps> = ({
         const diagrams = await listDiagrams({ includeTables: true });
         setDiagrams(
             diagrams.sort(
-                (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+                (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
             )
         );
     }, [listDiagrams]);
@@ -69,6 +69,7 @@ export const OpenDiagramDialog: React.FC<OpenDiagramDialogProps> = ({
             if (diagramId) {
                 updateConfig({ config: { defaultDiagramId: diagramId } });
                 navigate(`/diagrams/${diagramId}`);
+                closeOpenDiagramDialog();
             }
         },
         [updateConfig, navigate]
