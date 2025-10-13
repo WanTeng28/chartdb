@@ -11,6 +11,9 @@ import type { DBDependency } from '@/lib/domain/db-dependency';
 import type { Area } from '@/lib/domain/area';
 import type { DBCustomType } from '@/lib/domain/db-custom-type';
 import type { DiagramFilter } from '@/lib/domain/diagram-filter/diagram-filter';
+import apiStorage from './api'; // Import API implementation
+
+const useApi = true //import.meta.env.VITE_USE_API === 'true';
 
 export const StorageProvider: React.FC<React.PropsWithChildren> = ({
     children,
@@ -231,591 +234,312 @@ export const StorageProvider: React.FC<React.PropsWithChildren> = ({
         return dexieDB;
     }, []);
 
-    const getConfig: StorageContext['getConfig'] =
-        useCallback(async (): Promise<ChartDBConfig | undefined> => {
-            return await db.config.get(1);
-        }, [db]);
-
-    const updateConfig: StorageContext['updateConfig'] = useCallback(
-        async (config) => {
-            await db.config.update(1, config);
-        },
-        [db]
-    );
-
-    const getDiagramFilter: StorageContext['getDiagramFilter'] = useCallback(
-        async (diagramId: string): Promise<DiagramFilter | undefined> => {
-            const filter = await db.diagram_filters.get({ diagramId });
-
-            return filter;
-        },
-        [db]
-    );
-
-    const updateDiagramFilter: StorageContext['updateDiagramFilter'] =
-        useCallback(
-            async (diagramId, filter): Promise<void> => {
-                await db.diagram_filters.put({
-                    diagramId,
-                    ...filter,
-                });
-            },
-            [db]
+  const dexieImpl: StorageContext = {
+    getConfig: useCallback(async () => await db.config.get(1), [db]),
+    updateConfig: useCallback(async (config) => {
+      await db.config.update(1, config);
+    }, [db]),
+    getDiagramFilter: useCallback(async (diagramId: string) => {
+      return await db.diagram_filters.get({ diagramId });
+    }, [db]),
+    updateDiagramFilter: useCallback(async (diagramId, filter) => {
+      await db.diagram_filters.put({ diagramId, ...filter });
+    }, [db]),
+    deleteDiagramFilter: useCallback(async (diagramId: string) => {
+      await db.diagram_filters.where({ diagramId }).delete();
+    }, [db]),
+    addTable: useCallback(async ({ diagramId, table }) => {
+      await db.db_tables.add({ ...table, diagramId });
+    }, [db]),
+    getTable: useCallback(async ({ id, diagramId }) => {
+      return await db.db_tables.get({ id, diagramId });
+    }, [db]),
+    deleteDiagramTables: useCallback(async (diagramId) => {
+      await db.db_tables.where('diagramId').equals(diagramId).delete();
+    }, [db]),
+    updateTable: useCallback(async ({ id, attributes }) => {
+      await db.db_tables.update(id, attributes);
+    }, [db]),
+    putTable: useCallback(async ({ diagramId, table }) => {
+      await db.db_tables.put({ ...table, diagramId });
+    }, [db]),
+    deleteTable: useCallback(async ({ id, diagramId }) => {
+      await db.db_tables.where({ id, diagramId }).delete();
+    }, [db]),
+    listTables: useCallback(async (diagramId) => {
+      return await db.db_tables.where('diagramId').equals(diagramId).toArray();
+    }, [db]),
+    addRelationship: useCallback(async ({ diagramId, relationship }) => {
+      await db.db_relationships.add({ ...relationship, diagramId });
+    }, [db]),
+    deleteDiagramRelationships: useCallback(async (diagramId) => {
+      await db.db_relationships.where('diagramId').equals(diagramId).delete();
+    }, [db]),
+    getRelationship: useCallback(async ({ id, diagramId }) => {
+      return await db.db_relationships.get({ id, diagramId });
+    }, [db]),
+    updateRelationship: useCallback(async ({ id, attributes }) => {
+      await db.db_relationships.update(id, attributes);
+    }, [db]),
+    deleteRelationship: useCallback(async ({ id, diagramId }) => {
+      await db.db_relationships.where({ id, diagramId }).delete();
+    }, [db]),
+    listRelationships: useCallback(async (diagramId) => {
+      return (await db.db_relationships.where('diagramId').equals(diagramId).toArray()).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+    }, [db]),
+    addDependency: useCallback(async ({ diagramId, dependency }) => {
+      await db.db_dependencies.add({ ...dependency, diagramId });
+    }, [db]),
+    getDependency: useCallback(async ({ diagramId, id }) => {
+      return await db.db_dependencies.get({ id, diagramId });
+    }, [db]),
+    updateDependency: useCallback(async ({ id, attributes }) => {
+      await db.db_dependencies.update(id, attributes);
+    }, [db]),
+    deleteDependency: useCallback(async ({ diagramId, id }) => {
+      await db.db_dependencies.where({ id, diagramId }).delete();
+    }, [db]),
+    listDependencies: useCallback(async (diagramId) => {
+      return await db.db_dependencies.where('diagramId').equals(diagramId).toArray();
+    }, [db]),
+    deleteDiagramDependencies: useCallback(async (diagramId) => {
+      await db.db_dependencies.where('diagramId').equals(diagramId).delete();
+    }, [db]),
+    addArea: useCallback(async ({ area, diagramId }) => {
+      await db.areas.add({ ...area, diagramId });
+    }, [db]),
+    getArea: useCallback(async ({ diagramId, id }) => {
+      return await db.areas.get({ id, diagramId });
+    }, [db]),
+    updateArea: useCallback(async ({ id, attributes }) => {
+      await db.areas.update(id, attributes);
+    }, [db]),
+    deleteArea: useCallback(async ({ diagramId, id }) => {
+      await db.areas.where({ id, diagramId }).delete();
+    }, [db]),
+    listAreas: useCallback(async (diagramId) => {
+      return await db.areas.where('diagramId').equals(diagramId).toArray();
+    }, [db]),
+    deleteDiagramAreas: useCallback(async (diagramId) => {
+      await db.areas.where('diagramId').equals(diagramId).delete();
+    }, [db]),
+    addCustomType: useCallback(async ({ diagramId, customType }) => {
+      await db.db_custom_types.add({ ...customType, diagramId });
+    }, [db]),
+    getCustomType: useCallback(async ({ diagramId, id }) => {
+      return await db.db_custom_types.get({ id, diagramId });
+    }, [db]),
+    updateCustomType: useCallback(async ({ id, attributes }) => {
+      await db.db_custom_types.update(id, attributes);
+    }, [db]),
+    deleteCustomType: useCallback(async ({ diagramId, id }) => {
+      await db.db_custom_types.where({ id, diagramId }).delete();
+    }, [db]),
+    listCustomTypes: useCallback(async (diagramId) => {
+      return (await db.db_custom_types.where('diagramId').equals(diagramId).toArray()).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+    }, [db]),
+    deleteDiagramCustomTypes: useCallback(async (diagramId) => {
+      await db.db_custom_types.where('diagramId').equals(diagramId).delete();
+    }, [db]),
+    addDiagram: useCallback(
+      async ({ diagram }) => {
+        const promises = [];
+        promises.push(
+          db.diagrams.add({
+            id: diagram.id,
+            name: diagram.name,
+            databaseType: diagram.databaseType,
+            databaseEdition: diagram.databaseEdition,
+            createdAt: diagram.createdAt,
+            updatedAt: diagram.updatedAt,
+          })
         );
-
-    const deleteDiagramFilter: StorageContext['deleteDiagramFilter'] =
-        useCallback(
-            async (diagramId: string): Promise<void> => {
-                await db.diagram_filters.where({ diagramId }).delete();
-            },
-            [db]
+        const tables = diagram.tables ?? [];
+        promises.push(...tables.map((table) => db.db_tables.add({ ...table, diagramId: diagram.id })));
+        const relationships = diagram.relationships ?? [];
+        promises.push(
+          ...relationships.map((relationship) => db.db_relationships.add({ ...relationship, diagramId: diagram.id }))
         );
-
-    const addTable: StorageContext['addTable'] = useCallback(
-        async ({ diagramId, table }) => {
-            await db.db_tables.add({
-                ...table,
-                diagramId,
-            });
-        },
-        [db]
-    );
-
-    const getTable: StorageContext['getTable'] = useCallback(
-        async ({ id, diagramId }): Promise<DBTable | undefined> => {
-            return await db.db_tables.get({ id, diagramId });
-        },
-        [db]
-    );
-
-    const deleteDiagramTables: StorageContext['deleteDiagramTables'] =
-        useCallback(
-            async (diagramId) => {
-                await db.db_tables
-                    .where('diagramId')
-                    .equals(diagramId)
-                    .delete();
-            },
-            [db]
+        const dependencies = diagram.dependencies ?? [];
+        promises.push(
+          ...dependencies.map((dependency) => db.db_dependencies.add({ ...dependency, diagramId: diagram.id }))
         );
-
-    const updateTable: StorageContext['updateTable'] = useCallback(
-        async ({ id, attributes }) => {
-            await db.db_tables.update(id, attributes);
-        },
-        [db]
-    );
-
-    const putTable: StorageContext['putTable'] = useCallback(
-        async ({ diagramId, table }) => {
-            await db.db_tables.put({ ...table, diagramId });
-        },
-        [db]
-    );
-
-    const deleteTable: StorageContext['deleteTable'] = useCallback(
-        async ({ id, diagramId }) => {
-            await db.db_tables.where({ id, diagramId }).delete();
-        },
-        [db]
-    );
-
-    const listTables: StorageContext['listTables'] = useCallback(
-        async (diagramId): Promise<DBTable[]> => {
-            // Fetch all tables associated with the diagram
-            const tables = await db.db_tables
-                .where('diagramId')
-                .equals(diagramId)
-                .toArray();
-
-            return tables;
-        },
-        [db]
-    );
-
-    const addRelationship: StorageContext['addRelationship'] = useCallback(
-        async ({ diagramId, relationship }) => {
-            await db.db_relationships.add({
-                ...relationship,
-                diagramId,
-            });
-        },
-        [db]
-    );
-
-    const deleteDiagramRelationships: StorageContext['deleteDiagramRelationships'] =
-        useCallback(
-            async (diagramId) => {
-                await db.db_relationships
-                    .where('diagramId')
-                    .equals(diagramId)
-                    .delete();
-            },
-            [db]
+        const areas = diagram.areas ?? [];
+        promises.push(...areas.map((area) => db.areas.add({ ...area, diagramId: diagram.id })));
+        const customTypes = diagram.customTypes ?? [];
+        promises.push(
+          ...customTypes.map((customType) => db.db_custom_types.add({ ...customType, diagramId: diagram.id }))
         );
+        await Promise.all(promises);
+      },
+      [db]
+    ),
+    listDiagrams: useCallback(
+      async (options = { includeRelationships: false, includeTables: false, includeDependencies: false, includeAreas: false, includeCustomTypes: false }) => {
+        let diagrams = await db.diagrams.toArray();
+        if (options.includeTables) {
+          diagrams = await Promise.all(
+            diagrams.map(async (diagram) => {
+              diagram.tables = await db.db_tables.where('diagramId').equals(diagram.id).toArray();
+              return diagram;
+            })
+          );
+        }
+        if (options.includeRelationships) {
+          diagrams = await Promise.all(
+            diagrams.map(async (diagram) => {
+              diagram.relationships = await db.db_relationships.where('diagramId').equals(diagram.id).toArray();
+              return diagram;
+            })
+          );
+        }
+        if (options.includeDependencies) {
+          diagrams = await Promise.all(
+            diagrams.map(async (diagram) => {
+              diagram.dependencies = await db.db_dependencies.where('diagramId').equals(diagram.id).toArray();
+              return diagram;
+            })
+          );
+        }
+        if (options.includeAreas) {
+          diagrams = await Promise.all(
+            diagrams.map(async (diagram) => {
+              diagram.areas = await db.areas.where('diagramId').equals(diagram.id).toArray();
+              return diagram;
+            })
+          );
+        }
+        if (options.includeCustomTypes) {
+          diagrams = await Promise.all(
+            diagrams.map(async (diagram) => {
+              diagram.customTypes = await db.db_custom_types.where('diagramId').equals(diagram.id).toArray();
+              return diagram;
+            })
+          );
+        }
+        return diagrams;
+      },
+      [db]
+    ),
+    getDiagram: useCallback(
+      async (id, options = { includeRelationships: false, includeTables: false, includeDependencies: false, includeAreas: false, includeCustomTypes: false }) => {
+        const diagram = await db.diagrams.get(id);
+        if (!diagram) {
+          return undefined;
+        }
+        if (options.includeTables) {
+          diagram.tables = await db.db_tables.where('diagramId').equals(id).toArray();
+        }
+        if (options.includeRelationships) {
+          diagram.relationships = await db.db_relationships.where('diagramId').equals(id).toArray();
+        }
+        if (options.includeDependencies) {
+          diagram.dependencies = await db.db_dependencies.where('diagramId').equals(id).toArray();
+        }
+        if (options.includeAreas) {
+          diagram.areas = await db.areas.where('diagramId').equals(id).toArray();
+        }
+        if (options.includeCustomTypes) {
+          diagram.customTypes = await db.db_custom_types.where('diagramId').equals(id).toArray();
+        }
+        return diagram;
+      },
+      [db]
+    ),
+    updateDiagram: useCallback(
+      async ({ id, attributes }) => {
+        await db.diagrams.update(id, attributes);
+        if (attributes.id) {
+          await Promise.all([
+            db.db_tables.where('diagramId').equals(id).modify({ diagramId: attributes.id }),
+            db.db_relationships.where('diagramId').equals(id).modify({ diagramId: attributes.id }),
+            db.db_dependencies.where('diagramId').equals(id).modify({ diagramId: attributes.id }),
+            db.areas.where('diagramId').equals(id).modify({ diagramId: attributes.id }),
+            db.db_custom_types.where('diagramId').equals(id).modify({ diagramId: attributes.id }),
+          ]);
+        }
+      },
+      [db]
+    ),
+    deleteDiagram: useCallback(
+      async (id) => {
+        await Promise.all([
+          db.diagrams.delete(id),
+          db.db_tables.where('diagramId').equals(id).delete(),
+          db.db_relationships.where('diagramId').equals(id).delete(),
+          db.db_dependencies.where('diagramId').equals(id).delete(),
+          db.areas.where('diagramId').equals(id).delete(),
+          db.db_custom_types.where('diagramId').equals(id).delete(),
+        ]);
+      },
+      [db]
+    ),
+  };
+const storageImpl: StorageContext = useApi ? apiStorage : dexieImpl;
 
-    const getRelationship: StorageContext['getRelationship'] = useCallback(
-        async ({ id, diagramId }): Promise<DBRelationship | undefined> => {
-            return await db.db_relationships.get({ id, diagramId });
-        },
-        [db]
-    );
+  // Handle config initialization for API (mimic Dexie on('ready'))
+  if (useApi) {
+    storageImpl.getConfig().then(async (config) => {
+      if (!config) {
+        const diagrams = await storageImpl.listDiagrams();
+        await storageImpl.updateConfig({ defaultDiagramId: diagrams?.[0]?.id ?? '' });
+      }
+    });
+  }
 
-    const updateRelationship: StorageContext['updateRelationship'] =
-        useCallback(
-            async ({ id, attributes }) => {
-                await db.db_relationships.update(id, attributes);
-            },
-            [db]
-        );
+  return <storageContext.Provider value={storageImpl}>{children}</storageContext.Provider>;
 
-    const deleteRelationship: StorageContext['deleteRelationship'] =
-        useCallback(
-            async ({ id, diagramId }) => {
-                await db.db_relationships.where({ id, diagramId }).delete();
-            },
-            [db]
-        );
-
-    const listRelationships: StorageContext['listRelationships'] = useCallback(
-        async (diagramId): Promise<DBRelationship[]> => {
-            // Sort relationships alphabetically
-            return (
-                await db.db_relationships
-                    .where('diagramId')
-                    .equals(diagramId)
-                    .toArray()
-            ).sort((a, b) => {
-                return a.name.localeCompare(b.name);
-            });
-        },
-        [db]
-    );
-
-    const addDependency: StorageContext['addDependency'] = useCallback(
-        async ({ diagramId, dependency }) => {
-            await db.db_dependencies.add({
-                ...dependency,
-                diagramId,
-            });
-        },
-        [db]
-    );
-
-    const getDependency: StorageContext['getDependency'] = useCallback(
-        async ({ diagramId, id }) => {
-            return await db.db_dependencies.get({ id, diagramId });
-        },
-        [db]
-    );
-
-    const updateDependency: StorageContext['updateDependency'] = useCallback(
-        async ({ id, attributes }) => {
-            await db.db_dependencies.update(id, attributes);
-        },
-        [db]
-    );
-
-    const deleteDependency: StorageContext['deleteDependency'] = useCallback(
-        async ({ diagramId, id }) => {
-            await db.db_dependencies.where({ id, diagramId }).delete();
-        },
-        [db]
-    );
-
-    const listDependencies: StorageContext['listDependencies'] = useCallback(
-        async (diagramId) => {
-            return await db.db_dependencies
-                .where('diagramId')
-                .equals(diagramId)
-                .toArray();
-        },
-        [db]
-    );
-
-    const deleteDiagramDependencies: StorageContext['deleteDiagramDependencies'] =
-        useCallback(
-            async (diagramId) => {
-                await db.db_dependencies
-                    .where('diagramId')
-                    .equals(diagramId)
-                    .delete();
-            },
-            [db]
-        );
-
-    const addArea: StorageContext['addArea'] = useCallback(
-        async ({ area, diagramId }) => {
-            await db.areas.add({
-                ...area,
-                diagramId,
-            });
-        },
-        [db]
-    );
-
-    const getArea: StorageContext['getArea'] = useCallback(
-        async ({ diagramId, id }) => {
-            return await db.areas.get({ id, diagramId });
-        },
-        [db]
-    );
-
-    const updateArea: StorageContext['updateArea'] = useCallback(
-        async ({ id, attributes }) => {
-            await db.areas.update(id, attributes);
-        },
-        [db]
-    );
-
-    const deleteArea: StorageContext['deleteArea'] = useCallback(
-        async ({ diagramId, id }) => {
-            await db.areas.where({ id, diagramId }).delete();
-        },
-        [db]
-    );
-
-    const listAreas: StorageContext['listAreas'] = useCallback(
-        async (diagramId) => {
-            return await db.areas
-                .where('diagramId')
-                .equals(diagramId)
-                .toArray();
-        },
-        [db]
-    );
-
-    const deleteDiagramAreas: StorageContext['deleteDiagramAreas'] =
-        useCallback(
-            async (diagramId) => {
-                await db.areas.where('diagramId').equals(diagramId).delete();
-            },
-            [db]
-        );
-
-    // Custom type operations
-    const addCustomType: StorageContext['addCustomType'] = useCallback(
-        async ({ diagramId, customType }) => {
-            await db.db_custom_types.add({
-                ...customType,
-                diagramId,
-            });
-        },
-        [db]
-    );
-
-    const getCustomType: StorageContext['getCustomType'] = useCallback(
-        async ({ diagramId, id }): Promise<DBCustomType | undefined> => {
-            return await db.db_custom_types.get({ id, diagramId });
-        },
-        [db]
-    );
-
-    const updateCustomType: StorageContext['updateCustomType'] = useCallback(
-        async ({ id, attributes }) => {
-            await db.db_custom_types.update(id, attributes);
-        },
-        [db]
-    );
-
-    const deleteCustomType: StorageContext['deleteCustomType'] = useCallback(
-        async ({ diagramId, id }) => {
-            await db.db_custom_types.where({ id, diagramId }).delete();
-        },
-        [db]
-    );
-
-    const listCustomTypes: StorageContext['listCustomTypes'] = useCallback(
-        async (diagramId): Promise<DBCustomType[]> => {
-            return (
-                await db.db_custom_types
-                    .where('diagramId')
-                    .equals(diagramId)
-                    .toArray()
-            ).sort((a, b) => {
-                return a.name.localeCompare(b.name);
-            });
-        },
-        [db]
-    );
-
-    const deleteDiagramCustomTypes: StorageContext['deleteDiagramCustomTypes'] =
-        useCallback(
-            async (diagramId) => {
-                await db.db_custom_types
-                    .where('diagramId')
-                    .equals(diagramId)
-                    .delete();
-            },
-            [db]
-        );
-
-    const addDiagram: StorageContext['addDiagram'] = useCallback(
-        async ({ diagram }) => {
-            const promises = [];
-            promises.push(
-                db.diagrams.add({
-                    id: diagram.id,
-                    name: diagram.name,
-                    databaseType: diagram.databaseType,
-                    databaseEdition: diagram.databaseEdition,
-                    createdAt: diagram.createdAt,
-                    updatedAt: diagram.updatedAt,
-                })
-            );
-
-            const tables = diagram.tables ?? [];
-            promises.push(
-                ...tables.map((table) =>
-                    addTable({ diagramId: diagram.id, table })
-                )
-            );
-
-            const relationships = diagram.relationships ?? [];
-            promises.push(
-                ...relationships.map((relationship) =>
-                    addRelationship({ diagramId: diagram.id, relationship })
-                )
-            );
-
-            const dependencies = diagram.dependencies ?? [];
-            promises.push(
-                ...dependencies.map((dependency) =>
-                    addDependency({ diagramId: diagram.id, dependency })
-                )
-            );
-
-            const areas = diagram.areas ?? [];
-            promises.push(
-                ...areas.map((area) => addArea({ diagramId: diagram.id, area }))
-            );
-
-            const customTypes = diagram.customTypes ?? [];
-            promises.push(
-                ...customTypes.map((customType) =>
-                    addCustomType({ diagramId: diagram.id, customType })
-                )
-            );
-
-            await Promise.all(promises);
-        },
-        [db, addArea, addCustomType, addDependency, addRelationship, addTable]
-    );
-
-    const listDiagrams: StorageContext['listDiagrams'] = useCallback(
-        async (
-            options = {
-                includeRelationships: false,
-                includeTables: false,
-                includeDependencies: false,
-                includeAreas: false,
-                includeCustomTypes: false,
-            }
-        ): Promise<Diagram[]> => {
-            let diagrams = await db.diagrams.toArray();
-
-            if (options.includeTables) {
-                diagrams = await Promise.all(
-                    diagrams.map(async (diagram) => {
-                        diagram.tables = await listTables(diagram.id);
-                        return diagram;
-                    })
-                );
-            }
-
-            if (options.includeRelationships) {
-                diagrams = await Promise.all(
-                    diagrams.map(async (diagram) => {
-                        diagram.relationships = await listRelationships(
-                            diagram.id
-                        );
-                        return diagram;
-                    })
-                );
-            }
-
-            if (options.includeDependencies) {
-                diagrams = await Promise.all(
-                    diagrams.map(async (diagram) => {
-                        diagram.dependencies = await listDependencies(
-                            diagram.id
-                        );
-                        return diagram;
-                    })
-                );
-            }
-
-            if (options.includeAreas) {
-                diagrams = await Promise.all(
-                    diagrams.map(async (diagram) => {
-                        diagram.areas = await listAreas(diagram.id);
-                        return diagram;
-                    })
-                );
-            }
-
-            if (options.includeCustomTypes) {
-                diagrams = await Promise.all(
-                    diagrams.map(async (diagram) => {
-                        diagram.customTypes = await listCustomTypes(diagram.id);
-                        return diagram;
-                    })
-                );
-            }
-
-            return diagrams;
-        },
-        [
-            db,
-            listAreas,
-            listCustomTypes,
-            listDependencies,
-            listRelationships,
-            listTables,
-        ]
-    );
-
-    const getDiagram: StorageContext['getDiagram'] = useCallback(
-        async (
-            id,
-            options = {
-                includeRelationships: false,
-                includeTables: false,
-                includeDependencies: false,
-                includeAreas: false,
-                includeCustomTypes: false,
-            }
-        ): Promise<Diagram | undefined> => {
-            const diagram = await db.diagrams.get(id);
-
-            if (!diagram) {
-                return undefined;
-            }
-
-            if (options.includeTables) {
-                diagram.tables = await listTables(id);
-            }
-
-            if (options.includeRelationships) {
-                diagram.relationships = await listRelationships(id);
-            }
-
-            if (options.includeDependencies) {
-                diagram.dependencies = await listDependencies(id);
-            }
-
-            if (options.includeAreas) {
-                diagram.areas = await listAreas(id);
-            }
-
-            if (options.includeCustomTypes) {
-                diagram.customTypes = await listCustomTypes(id);
-            }
-
-            return diagram;
-        },
-        [
-            db,
-            listAreas,
-            listCustomTypes,
-            listDependencies,
-            listRelationships,
-            listTables,
-        ]
-    );
-
-    const updateDiagram: StorageContext['updateDiagram'] = useCallback(
-        async ({ id, attributes }) => {
-            await db.diagrams.update(id, attributes);
-
-            if (attributes.id) {
-                await Promise.all([
-                    db.db_tables
-                        .where('diagramId')
-                        .equals(id)
-                        .modify({ diagramId: attributes.id }),
-                    db.db_relationships
-                        .where('diagramId')
-                        .equals(id)
-                        .modify({ diagramId: attributes.id }),
-                    db.db_dependencies
-                        .where('diagramId')
-                        .equals(id)
-                        .modify({ diagramId: attributes.id }),
-                    db.areas.where('diagramId').equals(id).modify({
-                        diagramId: attributes.id,
-                    }),
-                    db.db_custom_types
-                        .where('diagramId')
-                        .equals(id)
-                        .modify({ diagramId: attributes.id }),
-                ]);
-            }
-        },
-        [db]
-    );
-
-    const deleteDiagram: StorageContext['deleteDiagram'] = useCallback(
-        async (id) => {
-            await Promise.all([
-                db.diagrams.delete(id),
-                db.db_tables.where('diagramId').equals(id).delete(),
-                db.db_relationships.where('diagramId').equals(id).delete(),
-                db.db_dependencies.where('diagramId').equals(id).delete(),
-                db.areas.where('diagramId').equals(id).delete(),
-                db.db_custom_types.where('diagramId').equals(id).delete(),
-            ]);
-        },
-        [db]
-    );
-
-    return (
-        <storageContext.Provider
-            value={{
-                getConfig,
-                updateConfig,
-                addDiagram,
-                listDiagrams,
-                getDiagram,
-                updateDiagram,
-                deleteDiagram,
-                addTable,
-                getTable,
-                updateTable,
-                putTable,
-                deleteTable,
-                listTables,
-                addRelationship,
-                getRelationship,
-                updateRelationship,
-                deleteRelationship,
-                listRelationships,
-                deleteDiagramTables,
-                deleteDiagramRelationships,
-                addDependency,
-                getDependency,
-                updateDependency,
-                deleteDependency,
-                listDependencies,
-                deleteDiagramDependencies,
-                addArea,
-                getArea,
-                updateArea,
-                deleteArea,
-                listAreas,
-                deleteDiagramAreas,
-                addCustomType,
-                getCustomType,
-                updateCustomType,
-                deleteCustomType,
-                listCustomTypes,
-                deleteDiagramCustomTypes,
-                getDiagramFilter,
-                updateDiagramFilter,
-                deleteDiagramFilter,
-            }}
-        >
-            {children}
-        </storageContext.Provider>
-    );
+    // return (
+    //     <storageContext.Provider
+    //         value={{
+    //             getConfig,
+    //             updateConfig,
+    //             addDiagram,
+    //             listDiagrams,
+    //             getDiagram,
+    //             updateDiagram,
+    //             deleteDiagram,
+    //             addTable,
+    //             getTable,
+    //             updateTable,
+    //             putTable,
+    //             deleteTable,
+    //             listTables,
+    //             addRelationship,
+    //             getRelationship,
+    //             updateRelationship,
+    //             deleteRelationship,
+    //             listRelationships,
+    //             deleteDiagramTables,
+    //             deleteDiagramRelationships,
+    //             addDependency,
+    //             getDependency,
+    //             updateDependency,
+    //             deleteDependency,
+    //             listDependencies,
+    //             deleteDiagramDependencies,
+    //             addArea,
+    //             getArea,
+    //             updateArea,
+    //             deleteArea,
+    //             listAreas,
+    //             deleteDiagramAreas,
+    //             addCustomType,
+    //             getCustomType,
+    //             updateCustomType,
+    //             deleteCustomType,
+    //             listCustomTypes,
+    //             deleteDiagramCustomTypes,
+    //             getDiagramFilter,
+    //             updateDiagramFilter,
+    //             deleteDiagramFilter,
+    //         }}
+    //     >
+    //         {children}
+    //     </storageContext.Provider>
+    //);
 };
