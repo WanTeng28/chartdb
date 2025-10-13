@@ -462,6 +462,7 @@ export const ChartDBProvider: React.FC<
             table: Partial<DBTable>,
             options = { updateHistory: true }
         ) => {
+
             const prevTable = getTable(id);
             setTables((tables) =>
                 tables.map((t) => (t.id === id ? { ...t, ...table } : t))
@@ -505,6 +506,7 @@ export const ChartDBProvider: React.FC<
             options = { updateHistory: true, forceOverride: false }
         ) => {
             const updateTables = (prevTables: DBTable[]) => {
+
                 const updatedTables = updateFn(prevTables);
                 if (options.forceOverride) {
                     return updatedTables as DBTable[];
@@ -791,10 +793,13 @@ export const ChartDBProvider: React.FC<
             field: DBField,
             options = { updateHistory: true }
         ) => {
+            console.log('hello')
             const fields = getTable(tableId)?.fields ?? [];
+            console.log(fields)
             setTables((tables) => {
                 return tables.map((table) => {
                     if (table.id === tableId) {
+                        console.log(tables)
                         db.updateTable({
                             id: tableId,
                             attributes: {
