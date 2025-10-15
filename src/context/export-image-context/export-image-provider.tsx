@@ -261,26 +261,26 @@ export const ExportImageProvider: React.FC<React.PropsWithChildren> = ({
                             const logoImage = new Image();
                             logoImage.src = logoBase64;
 
-                            await new Promise((resolve) => {
-                                logoImage.onload = () => {
-                                    // Calculate logo width while maintaining aspect ratio
-                                    const logoWidth =
-                                        (logoImage.width / logoImage.height) *
-                                        logoHeight;
+                            // await new Promise((resolve) => {
+                            //     logoImage.onload = () => {
+                            //         // Calculate logo width while maintaining aspect ratio
+                            //         const logoWidth =
+                            //             (logoImage.width / logoImage.height) *
+                            //             logoHeight;
 
-                                    // Draw logo in bottom-left corner
-                                    ctx.globalAlpha = 0.9;
-                                    ctx.drawImage(
-                                        logoImage,
-                                        padding,
-                                        canvas.height - logoHeight - padding,
-                                        logoWidth,
-                                        logoHeight
-                                    );
-                                    ctx.globalAlpha = 1;
-                                    resolve(null);
-                                };
-                            });
+                            //         // Draw logo in bottom-left corner
+                            //         ctx.globalAlpha = 0.9;
+                            //         ctx.drawImage(
+                            //             logoImage,
+                            //             padding,
+                            //             canvas.height - logoHeight - padding,
+                            //             logoWidth,
+                            //             logoHeight
+                            //         );
+                            //         ctx.globalAlpha = 1;
+                            //         resolve(null);
+                            //     };
+                            // });
 
                             // Convert canvas to data URL
                             const finalDataUrl = canvas.toDataURL(
