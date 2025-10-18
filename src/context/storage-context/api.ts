@@ -61,7 +61,6 @@ const apiStorage: StorageContext = {
     return await apiFetch<DiagramFilter>(`/diagram-filters/${diagramId}`);
   },
   updateDiagramFilter: async (diagramId: string, filter: DiagramFilter) => {
-    console.log(filter)
     await apiFetch(`/diagram-filters/${diagramId}`, {
       method: 'PUT',
       body: JSON.stringify({ tableIds: filter.tableIds, schemasIds: filter.schemaIds }),

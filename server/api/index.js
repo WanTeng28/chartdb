@@ -57,8 +57,7 @@ app.get('/diagram-filters/:diagramId', asyncHandler(async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const result = await conn.query('SELECT table_ids AS tableIds, schemas_ids AS schemasIds FROM diagram_filters WHERE diagram_id = ?', [diagramId]);
-    console.log(result)
-    res.json(result[0] ? { diagramId, tableIds: result[0].tableIds || [], schemasIds: result[0].schemasIds || []} : undefined);
+    res.json(result[0] ? { diagramId, tableIds: result[0].tableIds || null, schemasIds: result[0].schemasIds || null} : undefined);
   } finally {
     conn.release();
   }
@@ -67,15 +66,18 @@ app.get('/diagram-filters/:diagramId', asyncHandler(async (req, res) => {
 app.put('/diagram-filters/:diagramId', asyncHandler(async (req, res) => {
   const { diagramId } = req.params;
   const { tableIds, schemasIds } = req.body;
-  console.log(req.body)
   // if (!tableIds || !schemasIds) {
   //   return res.status(400).json({ error: 'Missing tableIds or schemasIds' });
   // }
   const conn = await pool.getConnection();
   try {
+    // null == no filter (all table visible)
+    // [] = got filter (id of visible table will be in array, no id = no table visible)
+    let valid_tableId = tableIds && tableIds.length >= 0 ? JSON.stringify(tableIds) : "null"
+    let valid_schemaId = schemasIds && schemasIds.length >= 0? JSON.stringify(schemasIds): "null"
     await conn.query(
       'INSERT INTO diagram_filters (diagram_id, table_ids, schemas_ids) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE table_ids = ?, schemas_ids = ?',
-      [diagramId, JSON.stringify(tableIds), JSON.stringify(schemasIds), JSON.stringify(tableIds), JSON.stringify(schemasIds)]
+      [diagramId, valid_tableId, valid_schemaId, valid_tableId, valid_schemaId]
     );
     res.status(204).send();
   } finally {
@@ -97,8 +99,6 @@ app.delete('/diagram-filters/:diagramId', asyncHandler(async (req, res) => {
 // Diagram endpoints
 app.post('/diagrams', asyncHandler(async (req, res) => {
   const { diagram } = req.body;
-   console.log("Headers:", req.headers);
-  console.log(req.body);
   if (!diagram || typeof diagram !== 'object') {
     return res.status(400).json({ error: 'Invalid or missing diagram object' });
   }
@@ -302,7 +302,6 @@ app.get('/diagrams/:diagramId/tables/:id', asyncHandler(async (req, res) => {
     if (!result[0]) {
       return res.status(404).json({ error: 'Table not found' });
     }
-    console.log(result)
     res.json({ ...result[0], fields: result[0].fields || [], indexes: result[0].indexes || [] });
   } finally {
     conn.release();
